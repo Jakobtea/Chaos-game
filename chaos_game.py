@@ -3,6 +3,7 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import random
+from tkinter import filedialog
 import math
 
 def generate_polygon(n, radius=1, center=(0.5, 0.5)):
@@ -16,6 +17,7 @@ def generate_polygon(n, radius=1, center=(0.5, 0.5)):
     ]
 
 def run_chaos_game():
+
     # Parameter holen
     try:
         num_vertices = int(vertex_entry.get())
@@ -39,10 +41,30 @@ def run_chaos_game():
     # Plot anzeigen
     ax.clear()
     ax.scatter(points_x, points_y, s=0.1, color='black')
-    ax.set_title(f'Chaos Game with {num_vertices} vertices')
+    ax.set_title(f'Chaos Game with {num_vertices} vertices and step {step}')
     ax.axis('equal')
     ax.axis('off')
     canvas.draw()
+
+def save_plot():
+    try:
+        num_vertices = int(vertex_entry.get())
+        step = float(step_entry.get())
+    except ValueError:
+        num_vertices = "?"
+        step = "?"
+
+    default_name = f"chaosgame_v{num_vertices}_s{step}_madebyjakobtea.png"
+
+    file_path = filedialog.asksaveasfilename(
+        defaultextension=".png",
+        filetypes=[("PNG files", "*.png"), ("All files", "*.*")],
+        initialfile=default_name 
+    )
+
+    if file_path:
+        fig.savefig(file_path, bbox_inches='tight', dpi=300)
+        print(f"Plot saved as {file_path}")
 
 # GUI mit Tkinter
 root = tk.Tk()
@@ -52,22 +74,23 @@ root.title("Interactive Chaos Game")
 frame = ttk.Frame(root)
 frame.pack(padx=10, pady=10)
 
-ttk.Label(frame, text="Ecken (3+):").grid(row=0, column=0)
+ttk.Label(frame, text="corners (3+):").grid(row=0, column=0)
 vertex_entry = ttk.Entry(frame)
 vertex_entry.insert(0, "3")
 vertex_entry.grid(row=0, column=1)
 
-ttk.Label(frame, text="Iterationen:").grid(row=1, column=0)
+ttk.Label(frame, text="interations:").grid(row=1, column=0)
 iterations_entry = ttk.Entry(frame)
 iterations_entry.insert(0, "10000")
 iterations_entry.grid(row=1, column=1)
 
-ttk.Label(frame, text="Schrittfaktor (z. B. 0.5):").grid(row=2, column=0)
+ttk.Label(frame, text="Step factor (z. B. 0.5):").grid(row=2, column=0)
 step_entry = ttk.Entry(frame)
 step_entry.insert(0, "0.5")
 step_entry.grid(row=2, column=1)
 
 ttk.Button(frame, text="Start", command=run_chaos_game).grid(row=3, column=0, columnspan=2, pady=5)
+ttk.Button(frame, text="Save as PNG", command=save_plot).grid(row=4, column=0, columnspan=2, pady=5)
 
 # Matplotlib-Canvas
 fig, ax = plt.subplots(figsize=(5, 5))
