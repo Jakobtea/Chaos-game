@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>Chaos Game Web</title>
+<style>
+  body {
+    background-color: #121212;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 20px;
+  }
+  canvas {
+    border: 1px solid #444;
+    background-color: black;
+    display: block;
+    margin: 20px auto;
+  }
+  input, button {
+    margin: 5px;
+    padding: 6px 10px;
+    font-size: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<h1>Chaos Game im Browser</h1>
+
+<div>
+  <label>Ecken (3+): <input type="number" id="corners" value="3" min="3" max="10"></label>
+  <label>Schritt (z.B. 0.5–2): <input type="number" id="step" value="1.5" step="0.1" min="0.1" max="2"></label>
+  <label>Iterationen: <input type="number" id="iterations" value="10000" min="100" max="50000" step="100"></label>
+</div>
+
+<button id="startBtn">Start</button>
+
+<canvas id="canvas" width="600" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function generatePolygon(n, radius=250, centerX=300, centerY=300) {
+  let vertices = [];
+  for(let i=0; i<n; i++) {
+    let angle = 2 * Math.PI * i / n;
+    vertices.push({
+      x: centerX + radius * Math.cos(angle),
+      y: centerY + radius * Math.sin(angle)
+    });
+  }
+  return vertices;
+}
+
+function chaosGame(numVertices, iterations, step) {
+  let vertices = generatePolygon(numVertices);
+  let x = Math.random() * canvas.width;
+  let y = Math.random() * canvas.height;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'cyan';
+
+  for(let i=0; i<iterations; i++) {
+    let v = vertices[Math.floor(Math.random() * vertices.length)];
+    x = x + step * (v.x - x);
+    y = y + step * (v.y - y);
+    ctx.fillRect(x, y, 1, 1);
+  }
+}
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  const numVertices = parseInt(document.getElementById('corners').value);
+  const step = parseFloat(document.getElementById('step').value);
+  const iterations = parseInt(document.getElementById('iterations').value);
+
+  if (numVertices < 3) {
+    alert("Die Anzahl der Ecken muss mindestens 3 sein.");
+    return;
+  }
+  if (step <= 0 || step > 10) {
+    alert("Der Schrittwert sollte zwischen 0.1 und 10 liegen.");
+    return;
+  }
+  if (iterations < 100) {
+    alert("Bitte mindestens 100 Iterationen wählen.");
+    return;
+  }
+
+  chaosGame(numVertices, iterations, step);
+});
+
+// Zeichne initial beim Laden
+chaosGame(3, 10000, 1.5);
+</script>
+
+</body>
+</html>
