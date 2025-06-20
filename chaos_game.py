@@ -7,6 +7,11 @@ from tkinter import filedialog
 import math
 import matplotlib.cm as cm
 import numpy as np
+import sys
+import os
+import matplotlib.cm as cm
+import numpy as np
+import time
 
 def generate_polygon(n, radius=1, center=(0.5, 0.5)):
     cx, cy = center
@@ -39,6 +44,7 @@ def run_chaos_game():
         y = y + step * (vy - y)
         points_x.append(x)
         points_y.append(y)
+        
 
     # Plot anzeigen
     ax.clear()
@@ -47,9 +53,6 @@ def run_chaos_game():
     ax.axis('equal')
     ax.axis('off')
     canvas.draw()
-
-import matplotlib.cm as cm
-import numpy as np
 
 def run_multiple_chaos_games():
     try:
@@ -62,7 +65,7 @@ def run_multiple_chaos_games():
 
     global fig, canvas
     canvas.get_tk_widget().destroy()
-    fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(16, 16))
+    fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(11.69, 8.27))
     canvas = FigureCanvasTkAgg(fig, master=root)
     canvas.get_tk_widget().pack()
     fig.subplots_adjust(hspace=0.4)
@@ -88,15 +91,12 @@ def run_multiple_chaos_games():
             points_x.append(x)
             points_y.append(y)
 
-        ax.scatter(points_x, points_y, s=0.3, color=color)
+        ax.scatter(points_x, points_y,color="black", s=0.1, )
         ax.set_title(f"Step = {step}", fontsize=8)
         ax.axis('equal')
         ax.axis('off')
 
     canvas.draw()
-
-
-
 
 def save_plot():
 
@@ -119,6 +119,47 @@ def save_plot():
     if file_path:
         fig.savefig(file_path, bbox_inches='tight', dpi=300)
         print(f"Plot saved as {file_path}")
+
+def restart_app():
+    root.destroy()  # aktuelles Fenster schließen
+    # Python-Interpreter mit dem gleichen Skript neu starten
+    os.execl(sys.executable, sys.executable, *sys.argv)
+
+def run_chaos_game_animated():
+    try:
+        num_vertices = int(vertex_entry.get())
+        iterations = int(iterations_entry.get())
+        step = float(step_entry.get())
+    except ValueError:
+        return
+
+    vertices = generate_polygon(num_vertices)
+    x, y = random.random(), random.random()
+    points_x, points_y = [], []
+
+    # Innere Funktion für die Animation
+    def animate(i=0):
+        nonlocal x, y
+        if i >= iterations:
+            return  # Ende der Animation
+
+        vx, vy = random.choice(vertices)
+        x = x + step * (vx - x)
+        y = y + step * (vy - y)
+        points_x.append(x)
+        points_y.append(y)
+
+        ax.clear()
+        ax.scatter(points_x, points_y, s=0.5, color='black')
+        ax.set_title(f'Chaos Game with {num_vertices} vertices and step {step}')
+        ax.axis('equal')
+        ax.axis('off')
+        canvas.draw()
+
+        # Nächster Schritt in 10 ms
+        root.after(1, lambda: animate(i + 1))
+
+    animate()
 
 # GUI mit Tkinter
 root = tk.Tk()
@@ -146,6 +187,8 @@ step_entry.grid(row=2, column=1)
 ttk.Button(frame, text="Start", command=run_chaos_game).grid(row=3, column=0, columnspan=2, pady=5)
 ttk.Button(frame, text="Save as PNG", command=save_plot).grid(row=4, column=0, columnspan=2, pady=5)
 ttk.Button(frame, text="Run multiple games", command=run_multiple_chaos_games).grid(row=5, column=0, columnspan=2, pady=5)
+ttk.Button(frame, text="Restart", command=restart_app).grid(row=6, column=0, columnspan=2, pady=5)
+ttk.Button(frame, text="Start Animation", command=run_chaos_game_animated).grid(row=7, column=0, columnspan=2, pady=5)
 
 
 # Matplotlib-Canvas
