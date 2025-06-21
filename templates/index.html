@@ -1,40 +1,82 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<title>Chaos Game Web</title>
-<style>
-  body {
-    background-color: #121212;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    margin: 20px;
-  }
-  canvas {
-    border: 1px solid #444;
-    background-color: black;
-    display: block;
-    margin: 20px auto;
-  }
-  input, button {
-    margin: 5px;
-    padding: 6px 10px;
-    font-size: 1rem;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <title>Chaos Game Web</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: 'Press Start 2P', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9rem;
+    }
+
+    input, select, button {
+      padding: 6px 10px;
+      font-size: 1rem;
+      margin-top: 3px;
+    }
+
+    canvas {
+      border: 1px solid #444;
+      background-color: black;
+      margin-top: 10px;
+      max-width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      #controls {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
 </head>
 <body>
 
 <h1>Chaos Game im Browser</h1>
 
-<div>
-  <label>Ecken (3+): <input type="number" id="corners" value="3" min="3" max="10"></label>
-  <label>Schritt (z.B. 0.5–2): <input type="number" id="step" value="1.5" step="0.1" min="0.1" max="2"></label>
-  <label>Iterationen: <input type="number" id="iterations" value="10000" min="100" max="50000" step="100"></label>
+<div id="controls">
+  <label>Ecken (3+):
+    <input type="number" id="corners" value="3" min="3" max="10">
+  </label>
+  <label>Schritt (0.1–2.0):
+    <input type="number" id="step" value="1.5" step="0.1" min="0.1" max="2">
+  </label>
+  <label>Iterationen:
+    <input type="number" id="iterations" value="5000" min="100" max="100000" step="100">
+  </label>
+  <label>Farbe:
+    <input type="color" id="color" value="#00ffff">
+  </label>
+  <button id="startBtn">Start</button>
+  <button id="resetBtn">Reset</button>
+  <button id="saveBtn">Speichern</button>
 </div>
-
-<button id="startBtn">Start</button>
 
 <canvas id="canvas" width="600" height="600"></canvas>
 
@@ -42,10 +84,10 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-function generatePolygon(n, radius=250, centerX=300, centerY=300) {
-  let vertices = [];
-  for(let i=0; i<n; i++) {
-    let angle = 2 * Math.PI * i / n;
+function generatePolygon(n, radius = 250, centerX = canvas.width / 2, centerY = canvas.height / 2) {
+  const vertices = [];
+  for (let i = 0; i < n; i++) {
+    const angle = 2 * Math.PI * i / n;
     vertices.push({
       x: centerX + radius * Math.cos(angle),
       y: centerY + radius * Math.sin(angle)
@@ -54,45 +96,64 @@ function generatePolygon(n, radius=250, centerX=300, centerY=300) {
   return vertices;
 }
 
-function chaosGame(numVertices, iterations, step) {
-  let vertices = generatePolygon(numVertices);
+let animationFrame;
+let running = false;
+
+function startChaosGameAnimated(numVertices, iterations, step, color) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const vertices = generatePolygon(numVertices);
   let x = Math.random() * canvas.width;
   let y = Math.random() * canvas.height;
+  let i = 0;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'cyan';
+  ctx.fillStyle = color;
 
-  for(let i=0; i<iterations; i++) {
-    let v = vertices[Math.floor(Math.random() * vertices.length)];
-    x = x + step * (v.x - x);
-    y = y + step * (v.y - y);
-    ctx.fillRect(x, y, 1, 1);
+  running = true;
+
+  function draw() {
+    if (!running || i >= iterations) return;
+
+    for (let j = 0; j < 100 && i < iterations; j++, i++) {
+      const v = vertices[Math.floor(Math.random() * vertices.length)];
+      x = x + step * (v.x - x);
+      y = y + step * (v.y - y);
+      ctx.fillRect(x, y, 2, 2);
+    }
+
+    animationFrame = requestAnimationFrame(draw);
   }
+
+  draw();
 }
 
 document.getElementById('startBtn').addEventListener('click', () => {
   const numVertices = parseInt(document.getElementById('corners').value);
   const step = parseFloat(document.getElementById('step').value);
   const iterations = parseInt(document.getElementById('iterations').value);
+  const color = document.getElementById('color').value;
 
-  if (numVertices < 3) {
-    alert("Die Anzahl der Ecken muss mindestens 3 sein.");
-    return;
-  }
-  if (step <= 0 || step > 10) {
-    alert("Der Schrittwert sollte zwischen 0.1 und 10 liegen.");
-    return;
-  }
-  if (iterations < 100) {
-    alert("Bitte mindestens 100 Iterationen wählen.");
+  if (numVertices < 3 || step <= 0 || iterations < 100) {
+    alert("Bitte gültige Parameter eingeben.");
     return;
   }
 
-  chaosGame(numVertices, iterations, step);
+  running = false;
+  cancelAnimationFrame(animationFrame);
+  startChaosGameAnimated(numVertices, iterations, step, color);
 });
 
-// Zeichne initial beim Laden
-chaosGame(3, 10000, 1.5);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  running = false;
+  cancelAnimationFrame(animationFrame);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'chaosgame.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
 </script>
 
 </body>
