@@ -1,0 +1,6 @@
+Ein interaktives Tool zur Erzeugung fraktaler Muster mit dem Chaos-Game-Algorithmus.
+Features:
+    -Fraktale aus Polygonen mit einstellbarer Eckenzahl
+    -Anpassbare Schrittweite & Iterationen
+    -Export als PNG mit Dateiname nach Parametern
+
